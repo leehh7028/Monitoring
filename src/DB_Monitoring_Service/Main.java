@@ -27,28 +27,13 @@ public class Main
     public static void main(String[] args) throws IOException
     {
         // TODO Auto-generated method stub
-        // MutiThreadMode();
+        MutiThreadMode();
         
-        
-        try
-        {
-            FirebaseStorage fbs = new FirebaseStorage();
-            fbs.FirebaseConnet();
-            fbs.isRidding(false, "40001", "30530");
-            fbs.Log();
-            fbs.busSensorDataModify();
-        }
-        catch (InterruptedException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch (ExecutionException e)
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
+    	//FirebaseStorage fbs = new FirebaseStorage();
+        //fbs.FirebaseConnet();
+        //fbs.isRidding(false, "40001", "30530");
+        //fbs.Log();
+        //fbs.busSensorDataModify();
     }
 
     private static void MutiThreadMode()

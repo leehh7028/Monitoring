@@ -1,13 +1,17 @@
 package DB_Monitoring_Service;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
 import DB_Monitoring_Service.Custom_Data_Type.DeviceInfo;
 
 
 /*
- * 2020-04-05 수정 App 변경으로 인해 더이상의 push service가 필요 없어졌음. Push service 기능들은 모두 off 해야 함 센서 모니터링에서는 현재
- * 센서가 감지한 온도 조도 습도를 Firebase로 전송하기만 하면 됨
+ * 수정내역 
+ * App 변경으로 인해 더이상의 push service가 필요 없어졌음. 
+ * Push service 기능들은 모두 off 해야 함 센서 모니터링에서는 현재 센서가 감지한 온도 조도 습도를 Firebase로 전송
  * 
  */
 public class SensorMonitoring extends Thread
@@ -19,12 +23,16 @@ public class SensorMonitoring extends Thread
     List<DeviceInfo> deviceInfo = new ArrayList<DeviceInfo>();
     private boolean duplication = false;
     double avgAccuracy = 0.0;
-    
+    FirebaseStorage fbs;
 
     public SensorMonitoring(double limitTemperature)
     {
         // ps = new PushService();
         this.limitTemperature = limitTemperature;
+        
+        // 생성자가 만들어질때 firebase에 연결 
+        fbs = new FirebaseStorage();
+        fbs.FirebaseConnet();        
     }
 
 
@@ -101,7 +109,7 @@ public class SensorMonitoring extends Thread
                 System.out.println();
             }
             
-            // 리스트를 다 뒤져 봤는데도 충돌나는 MAC 주소가 없을 경우 해당 디바이스를 추가한다.
+            // 리스트를 다 검색했는데도 충돌나는 MAC 주소가 없을 경우 해당 디바이스를 추가한다.
             // 이는 위에서 찍힌 flag 값이 true 일 경우 같은 MAC으로 false는 다른 MAC 인것으로 판단 
             if(duplication == false)
             {
@@ -153,11 +161,11 @@ public class SensorMonitoring extends Thread
                 DeviceInfo accurcy = deviceInfo.get(i);         // 리스트에 저장된 Beacon 객체를 하나를 불러온다
                 /*********************************************************************************************************
                  * 
-                 * 아래 if(accurcy.getAccuracy().size() > 0)    구문 수정해야함  지금은 0개 보다 클때인데 수정할때에는 10개로 변경 또는 그 이상 숫자로 변경해야함
+                 * 										승하차 판단 기준    
                  * 
                  ********************************************************************************************************* 
                  */
-                if(accurcy.getAccuracy().size() > 0)            // 해당 Beacon 객체의 Accuracy 리스트 수가 10개면 승하차 판단을 시작 함
+                if(accurcy.getAccuracy().size() > 10)            // 해당 Beacon 객체의 Accuracy 리스트 수가 10개면 승하차 판단을 시작 함
                 {
                     System.out.println("Beacon minor : " + accurcy.getMinor());
                     System.out.print(accurcy.getMacAddress() + " " + accurcy.getMinor() + " 에 저장된 accuracy 값 : ");
@@ -181,19 +189,58 @@ public class SensorMonitoring extends Thread
                     System.out.println();
                     System.out.println(accurcy.getMacAddress() + " " + accurcy.getMinor() + "의 Accuracy sum : " + avgAccuracy);
                     System.out.println(accurcy.getMacAddress() + " " + accurcy.getMinor() + "의 Accuracy avg : " + avgAccuracy / 6);
-                    accurcy.setRssi(avgAccuracy / 6);   // 평균 accuracy 값을 해당 객체에 저장
-                    accurcy.clearAccuracy();            // 평균을 출력하여 승차하 판단 여부의 값을 출력하면 원소를 모두 삭제함
-                    accuracyCount = 0;                  // 초기화
-                    avgAccuracy = 0;                    //
+                    
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy년/MM월/dd일/HH:mm");
+                    Date dateTime = new Date();
+
+                    String chidrenUpdateTime = dateFormat.format(dateTime);
+                    // yyyy년/MM월/dd일/HH:mm의 형태로 저장된 날짜 출력
+                    System.out.println(chidrenUpdateTime);  
+                    
+                    /*
+                     *  승차, 하차 판단
+                     *  승차의 경우 Accuracy 값이 3.0 이하 
+                     *  하차의 경우 Accuracy 값이 4.0 이상
+                     */
+                    if(avgAccuracy <= 3.0)
+                    {
+                    	// 승차
+                    	System.out.println();
+                    	System.out.println("------------------------------------");
+                    	System.out.println("---------------- 승차 ----------------");
+                    	System.out.println("------------------------------------");
+                        fbs.isRidding(true, accurcy.getMajor(), accurcy.getMinor());
+                    }
+                    else if(avgAccuracy >= 4.0)
+                    {
+                    	// 하차
+                    	System.out.println();
+                    	System.out.println("------------------------------------");
+                    	System.out.println("---------------- 하차 ----------------");
+                    	System.out.println("------------------------------------");
+                    	fbs.isRidding(false, accurcy.getMajor(), accurcy.getMinor());
+                    }
+                    
+                    /*
+                     * Beacon 객체가 계속해서 해당 값을 가지고 있을 필요가 없다고 판단 
+                     * 출력된 값을 객체에 저장하는 코드를 삭제
+                     */
+                    //accurcy.setRssi(avgAccuracy / 6);   	// 평균 accuracy 값을 해당 객체에 저장                  
+                    //accurcy.setTime(chidrenUpdateTime);	// 계산된 시간을 저장
+                    accurcy.clearAccuracy();            	// 평균을 출력하여 승차하 판단 여부의 값을 출력하면 원소를 모두 삭제함
+                    accuracyCount = 0;                  	// 초기화
+                    avgAccuracy = 0;                    	// 값 초기화 
                     System.out.println();
                     System.out.println();
                 }
+                
             }
             System.out.println();
             System.out.println();
             System.out.println();
             
-            // 출력문 확인하려고 늦게 돌아가도록 슬립 넣음 
+            
+            
             try
             {
                 Thread.sleep(3000);
@@ -203,6 +250,7 @@ public class SensorMonitoring extends Thread
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+            
         }
 
     }

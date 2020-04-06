@@ -54,20 +54,27 @@ public class FirebaseStorage
     public void isRidding(boolean isRidding, String major, String minor)
     {
         // firebase에서 수정하고자 하는 ID 읽어오기
-        ApiFuture<QuerySnapshot> childrenRef = db.collection("children")
-                        .whereEqualTo("uuid", "e2c56db5-dffb-48d2-b060-d0f5a71096e0")
-                        .whereEqualTo("major", "40001")
-                        .whereEqualTo("minor", "30530")
-                        .get();
-        
+        //ApiFuture<QuerySnapshot> childrenRef = db.collection("children")
+        //                .whereEqualTo("uuid", "e2c56db5-dffb-48d2-b060-d0f5a71096e0")
+        //                .whereEqualTo("major", "40001")
+        //                .whereEqualTo("minor", "30530")
+        //                .get();
+    	ApiFuture<QuerySnapshot> childrenRef = db.collection("children")               
+                //.whereEqualTo("uuid", "e2c56db5-dffb-48d2-b060-d0f5a71096e0")  
+                .whereEqualTo("major", major)                                
+                .whereEqualTo("minor", minor)                                
+                .get();                                                        
+    	
         List<QueryDocumentSnapshot> documents = null;
         try
         {
             documents = childrenRef.get().getDocuments();
+            childrenID = documents.get(0).getId();
         }
         catch (InterruptedException e)
         {
             // TODO Auto-generated catch block
+        	System.out.println("입력된 정보와 일치하는 학생이 없음");
             e.printStackTrace();
         }
         catch (ExecutionException e)
@@ -76,7 +83,6 @@ public class FirebaseStorage
             e.printStackTrace();
         }
         
-        childrenID = documents.get(0).getId();
         System.out.println("target Document ID : " + childrenID);
 
         // 변경하고자 하는 DATA를 MAP의 형태로 저장

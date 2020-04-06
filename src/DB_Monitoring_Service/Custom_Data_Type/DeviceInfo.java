@@ -11,9 +11,9 @@ public class DeviceInfo
     private String major;
     private String minor;
     private Double rssi;
-    
-
+    private String time;
     private ArrayList<String> Accuracy = new ArrayList<String>();
+    
 
 
     public String getUserID()
@@ -75,6 +75,14 @@ public class DeviceInfo
     {
         this.rssi = rssi;
     }
+    
+    public String getTime() {
+		return time;
+	}
+
+	public void setTime(String time) {
+		this.time = time;
+	}
     
     public void setAccuracy(String MAC)
     {
